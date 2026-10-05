@@ -1,0 +1,49 @@
+[
+  {
+    "id": "url-to-notes",
+    "prompt": "把这个 B 站课程链接 https://www.bilibili.com/video/BV1xx411c7mD 变成一份课堂笔记网页，八年级物理。",
+    "expectations": [
+      "自动下载视频到本地后再分析",
+      "输出 notes-<标题>/classroom-notes.html",
+      "网页含知识框架、逐节笔记、考点、自测题、全文转写",
+      "每个回看锚点时间戳落在该节范围内"
+    ]
+  },
+  {
+    "id": "local-video",
+    "prompt": "把 C:/Users/me/Desktop/第3课.mp4 整理成课堂笔记，学科是初中物理，读者是八年级学生。",
+    "expectations": [
+      "抽关键帧并绑定到对应章节",
+      "公式用 LaTeX 渲染",
+      "AI 补充内容单独标注，不混入正文",
+      "run-report.json 的 issues 为空"
+    ]
+  },
+  {
+    "id": "audio-lecture",
+    "prompt": "这段讲座录音 C:/Users/me/Desktop/孔子与老子.m4a 帮我做成课堂笔记网页。",
+    "expectations": [
+      "识别为音频，不抽帧",
+      "知识点绑定 MM:SS 时间戳，点击可回听",
+      "教师/日期无法确定时写 [未提供]，不编造"
+    ]
+  },
+  {
+    "id": "with-transcript",
+    "prompt": "已有字幕文件课程.txt，配合视频课程.mp4 生成笔记网页。",
+    "expectations": [
+      "跳过 ASR 直接分析",
+      "转录术语错误按学科背景纠正",
+      "不确定的术语标注而非静默替换"
+    ]
+  },
+  {
+    "id": "offline-template-check",
+    "prompt": "先不调用模型，验证一下笔记网页版式对不对。",
+    "expectations": [
+      "使用 --mock-notes --skip-transcribe",
+      "产出 HTML 但内容为模板占位",
+      "九大区块齐全，无缺失本地资源"
+    ]
+  }
+]
