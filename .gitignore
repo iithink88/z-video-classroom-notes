@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.DS_Store
+Thumbs.db
+
+# 运行产物：笔记网页与素材不入库
+notes-*/
+study-qwen/
+*.mp4
+*.mp3
+*.wav
+!scripts/**/*.wav
