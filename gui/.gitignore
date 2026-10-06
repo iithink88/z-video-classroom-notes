@@ -1,0 +1,6 @@
+# 运行产物（每次生成一份，不入库、不分享）
+output/
+# 本地设置（含 API Key，切勿分享或提交）
+gui_settings.json
+__pycache__/
+*.pyc
