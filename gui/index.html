@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>课堂笔记智能体</title>
+<style>
+  :root{
+    --bg1:#FBF3E4; --bg2:#F6E7D2;
+    --card:#FFFDF8; --card2:#FFF8EC;
+    --ink:#3B3228; --ink-soft:#8C7B66; --line:#F0E0C6;
+    --accent:#E08A1E; --accent-d:#C9760F; --accent-soft:#FBE9CF;
+    --terra:#C75B39; --green:#5B8C5A; --red:#C0492F;
+    --radius:16px; --shadow:0 10px 30px rgba(150,110,50,.14);
+    --font:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:var(--font); color:var(--ink); line-height:1.6;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    min-height:100%;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:22px 18px 60px}
+  /* 顶栏 */
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .logo{font-size:30px;line-height:1;filter:drop-shadow(0 2px 3px rgba(180,120,40,.25))}
+  .brand b{font-size:20px;letter-spacing:.5px}
+  .brand span{display:block;font-size:12px;color:var(--ink-soft)}
+  .spacer{flex:1}
+  .btn-ghost{
+    border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;transition:.15s;
+  }
+  .btn-ghost:hover{background:var(--accent-soft);border-color:var(--accent)}
+  /* 卡片 */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+  .hero{display:flex;flex-direction:column;gap:4px;margin-bottom:4px}
+  .hero h1{margin:0;font-size:22px}
+  .hero p{margin:0;color:var(--ink-soft);font-size:13.5px}
+  .sec-title{font-size:14px;font-weight:700;color:var(--accent-d);margin:2px 0 12px;
+    display:flex;align-items:center;gap:6px}
+  /* 拖拽区 */
+  .drop{
+    border:2px dashed var(--accent);border-radius:14px;background:var(--accent-soft);
+    padding:26px 18px;text-align:center;cursor:pointer;transition:.15s;color:var(--accent-d);
+  }
+  .drop:hover,.drop.over{background:#FCE6C4;border-color:var(--accent-d)}
+  .drop .big{font-size:15px;font-weight:700}
+  .drop .sub{font-size:12.5px;color:var(--ink-soft);margin-top:4px}
+  .divider{display:flex;align-items:center;gap:10px;color:var(--ink-soft);
+    font-size:12px;margin:14px 0}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+  .row{display:flex;gap:10px}
+  .row input{flex:1}
+  input[type=text],input[type=url],input[type=password],textarea,select{
+    width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;
+    background:#FFFDF9;color:var(--ink);font-size:14px;font-family:var(--font);outline:none;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  textarea{resize:vertical;min-height:60px}
+  label.field{display:block;font-size:13px;color:var(--ink-soft);margin:10px 0 5px}
+  details.adv{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+  details.adv summary{cursor:pointer;color:var(--accent-d);font-size:13.5px;font-weight:600;list-style:none}
+  details.adv summary::-webkit-details-marker{display:none}
+  details.adv summary::before{content:"▸ "; }
+  details.adv[open] summary::before{content:"▾ "; }
+  /* 主按钮 */
+  .actions{display:flex;align-items:center;gap:12px;margin-top:16px}
+  .btn-main{
+    flex:1;border:none;border-radius:12px;padding:14px 18px;font-size:16px;font-weight:700;
+    color:#fff;cursor:pointer;background:linear-gradient(180deg,var(--accent),var(--accent-d));
+    box-shadow:0 8px 18px rgba(200,118,15,.32);transition:.15s;letter-spacing:.5px;
+  }
+  .btn-main:hover{filter:brightness(1.04)}
+  .btn-main:disabled{background:#D9CDB8;box-shadow:none;cursor:not-allowed;color:#fff}
+  .btn-2{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;
+    padding:14px 16px;font-size:14px;cursor:pointer;white-space:nowrap}
+  .btn-2:hover{background:var(--accent-soft)}
+  .chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-soft);cursor:pointer}
+  .chk input{width:16px;height:16px;accent-color:var(--accent)}
+  /* 文件条 */
+  .chip{display:none;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);
+    border-radius:10px;padding:8px 12px;margin-top:12px;font-size:13.5px}
+  .chip.show{display:flex}
+  .chip .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .chip .x{cursor:pointer;color:var(--terra);font-weight:700;font-size:18px;line-height:1}
+  /* 进度 */
+  .progress{display:none}
+  .progress.show{display:block}
+  .plog{background:var(--card2);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;max-height:280px;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:12.5px;color:#6b5b45;white-space:pre-wrap;word-break:break-word;margin-top:6px}
+  .spinner{width:16px;height:16px;border:2.5px solid var(--accent-soft);border-top-color:var(--accent);
+    border-radius:50%;display:inline-block;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* 结果 */
+  .result{display:none}
+  .result.show{display:block}
+  .banner{display:flex;align-items:center;gap:10px;background:#EAF4E7;border:1px solid #BFDDB8;
+    color:#3c6b3a;border-radius:12px;padding:12px 14px;font-weight:600;font-size:14.5px}
+  .banner.warn{background:#FCEFD9;border-color:#E9C98C;color:#8a5a12}
+  .banner.err{background:#FBE3DC;border-color:#E7B3A4;color:#9c3320}
+  .issues{background:#FBEDED;border:1px solid #EFC4BC;border-radius:10px;padding:10px 12px;
+    margin-top:10px;font-size:13px;color:#9c3320}
+  .issues b{display:block;margin-bottom:4px}
+  .iframe-box{margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  iframe{width:100%;height:74vh;border:0;display:block}
+  .result-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:8px}
+  /* 弹窗 */
+  .modal{position:fixed;inset:0;background:rgba(60,45,25,.42);display:none;align-items:flex-start;
+    justify-content:center;padding:40px 16px;overflow:auto;z-index:50}
+  .modal.show{display:flex}
+  .sheet{background:var(--card);border-radius:18px;max-width:560px;width:100%;box-shadow:var(--shadow);
+    padding:22px;border:1px solid var(--line)}
+  .sheet h2{margin:0 0 4px;font-size:19px}
+  .sheet .desc{color:var(--ink-soft);font-size:13px;margin:0 0 16px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .modal-actions{display:flex;gap:10px;margin-top:18px}
+  .modal-actions .btn-main{flex:1}
+  .pw-wrap{position:relative}
+  .pw-wrap .toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;
+    font-size:12px;color:var(--accent-d);user-select:none}
+  .tag{display:inline-block;font-size:11px;background:var(--accent-soft);color:var(--accent-d);
+    border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+  footer{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:18px}
+  a{color:var(--accent-d)}
+  @media (max-width:560px){.grid2{grid-template-columns:1fr}.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="logo">📒</div>
+    <div class="brand">
+      <b>课堂笔记智能体</b>
+      <span>视频 / 音频 → 可复习的课堂笔记网页</span>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn-ghost" id="openSettings">⚙️ 设置</button>
+  </div>
+
+  <!-- 主卡片 -->
+  <div class="card">
+    <div class="hero">
+      <h1>把一节课，变成一份能直接复习的笔记 🍂</h1>
+      <p>本地运行 · 支持 B站/YouTube/直链/本地视频与录音 · 默认使用通义千问</p>
+    </div>
+
+    <div class="sec-title">① 放入素材</div>
+    <div class="drop" id="drop">
+      <div class="big">📥 拖拽视频或音频到这里，或点击选择</div>
+      <div class="sub">支持 mp4 / mkv / mov / webm / mp3 / wav / m4a / flac 等</div>
+    </div>
+    <input type="file" id="file" accept="video/*,audio/*" hidden />
+    <div class="chip" id="chip"><span class="nm" id="chipName"></span><span class="x" id="chipX">×</span></div>
+
+    <div class="divider">或</div>
+    <div class="row">
+      <input type="url" id="url" placeholder="粘贴视频网址：B站 / YouTube / 视频号 / m3u8 / 直链" />
+    </div>
+
+    <details class="adv">
+      <summary>高级选项（学科 / 读者 / 补充要求）</summary>
+      <label class="field">学科背景（如：高中物理 / 机器学习）</label>
+      <input type="text" id="subject" placeholder="让术语纠错与公式排版更准" />
+      <label class="field">目标读者（如：初三学生 / 考研党）</label>
+      <input type="text" id="audience" placeholder="决定讲解粒度" />
+      <label class="field">补充要求（如：每节都配一道计算题）</label>
+      <textarea id="extra" placeholder="留空则按默认规范生成"></textarea>
+    </details>
+
+    <div class="actions">
+      <button class="btn-main" id="run">✨ 生成课堂笔记</button>
+      <label class="chk" title="不调模型、不转写、不抽帧，仅验证版式">
+        <input type="checkbox" id="mock" /> 试跑
+      </label>
+    </div>
+    <div class="hint">长视频请耐心等待：3 分钟约 4 次模型调用，45 分钟课约 7–10 分钟。生成期间请勿关闭本窗口。</div>
+  </div>
+
+  <!-- 进度 -->
+  <div class="card progress" id="progress">
+    <div class="sec-title">② 生成进度</div>
+    <div class="plog" id="plog"><span class="spinner"></span> 准备中…</div>
+  </div>
+
+  <!-- 结果 -->
+  <div class="card result" id="result">
+    <div class="sec-title">③ 笔记已生成</div>
+    <div id="banner" class="banner"></div>
+    <div class="issues" id="issues" style="display:none"></div>
+    <div class="iframe-box"><iframe id="preview" title="笔记预览" sandbox="allow-scripts allow-same-origin"></iframe></div>
+    <div class="result-actions">
+      <button class="btn-2" id="openTab">↗ 新标签打开</button>
+      <button class="btn-2" id="copyPath">📋 复制文件位置</button>
+      <button class="btn-2" id="regen">🔄 再做一份</button>
+    </div>
+    <div class="hint">预览内的 ▶ 时间戳与画面可跳转回看原片；按 Ctrl+P 可存成 PDF 纸质笔记。</div>
+  </div>
+
+  <footer>本地运行 · 密钥仅存本机 gui_settings.json · 由 z-video-classroom-notes 驱动</footer>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h2>⚙️ 设置</h2>
+    <p class="desc">默认已选通义千问(qwen3.7-plus)。可替换为任意兼容 OpenAI 协议的模型。</p>
+
+    <label class="field">API Key <span class="tag">通义千问 / DashScope</span></label>
+    <div class="pw-wrap">
+      <input type="password" id="s_api_key" placeholder="sk-..." autocomplete="off" />
+      <span class="toggle" id="s_keyToggle">显示</span>
+    </div>
+
+    <label class="field">模型 Base URL</label>
+    <input type="text" id="s_base_url" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1" />
+
+    <div class="grid2">
+      <div>
+        <label class="field">模型名称</label>
+        <input type="text" id="s_model" placeholder="qwen3.7-plus" />
+      </div>
+      <div>
+        <label class="field">默认学科（可选）</label>
+        <input type="text" id="s_subject" placeholder="如：初中物理" />
+      </div>
+    </div>
+    <label class="field">默认读者（可选）</label>
+    <input type="text" id="s_audience" placeholder="如：八年级学生" />
+
+    <label class="field">默认补充要求（可选）</label>
+    <textarea id="s_extra" placeholder="每次生成都附加的个性化要求"></textarea>
+
+    <div style="margin-top:12px;display:flex;gap:18px;flex-wrap:wrap">
+      <label class="chk"><input type="checkbox" id="s_single_file" checked /> 生成单文件 HTML（便于分享）</label>
+      <label class="chk"><input type="checkbox" id="s_auto_open" checked /> 生成后自动打开浏览器</label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-2" id="cancelSettings">取消</button>
+      <button class="btn-main" id="saveSettings">💾 保存设置</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let selectedFile = null;
+let lastResult = null;
+
+// ---------- 设置 ----------
+function loadSettings(){
+  fetch('/api/settings').then(r=>r.json()).then(s=>{
+    $('s_api_key').value = s.api_key || '';
+    $('s_base_url').value = s.base_url || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+    $('s_model').value = s.model || 'qwen3.7-plus';
+    $('s_subject').value = s.subject || '';
+    $('s_audience').value = s.audience || '';
+    $('s_extra').value = s.extra || '';
+    $('s_single_file').checked = s.single_file !== false;
+    $('s_auto_open').checked = s.auto_open !== false;
+    // 同步到主页高级选项默认值
+    if(!$('subject').value) $('subject').value = s.subject || '';
+    if(!$('audience').value) $('audience').value = s.audience || '';
+    if(!$('extra').value) $('extra').value = s.extra || '';
+  }).catch(()=>{});
+}
+
+$('openSettings').onclick = () => $('modal').classList.add('show');
+$('cancelSettings').onclick = () => $('modal').classList.remove('show');
+$('modal').addEventListener('click', e=>{ if(e.target===$('modal')) $('modal').classList.remove('show'); });
+$('s_keyToggle').onclick = () => {
+  const i=$('s_api_key'); i.type = i.type==='password'?'text':'password';
+  $('s_keyToggle').textContent = i.type==='password'?'显示':'隐藏';
+};
+$('saveSettings').onclick = () => {
+  const data = {
+    api_key: $('s_api_key').value.trim(),
+    base_url: $('s_base_url').value.trim() || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    model: $('s_model').value.trim() || 'qwen3.7-plus',
+    subject: $('s_subject').value.trim(),
+    audience: $('s_audience').value.trim(),
+    extra: $('s_extra').value.trim(),
+    single_file: $('s_single_file').checked,
+    auto_open: $('s_auto_open').checked,
+  };
+  fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(data)}).then(()=>{
+    // 写回主页高级选项
+    $('subject').value = data.subject; $('audience').value = data.audience; $('extra').value = data.extra;
+    $('modal').classList.remove('show');
+    flash('✅ 设置已保存（密钥仅存本机）');
+  });
+};
+
+// ---------- 文件选择 ----------
+const drop = $('drop');
+drop.onclick = () => $('file').click();
+$('file').onchange = e => { if(e.target.files[0]) setFile(e.target.files[0]); };
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) setFile(f); });
+function setFile(f){
+  // 仅接受音视频
+  if(!/^(video|audio)\//.test(f.type) && !/\.(mp4|mkv|webm|mov|m4v|avi|flv|ts|wmv|mp3|wav|m4a|aac|ogg|opus|flac|wma)$/i.test(f.name)){
+    flash('⚠️ 请选择视频或音频文件'); return;
+  }
+  selectedFile = f; $('url').value='';
+  $('chipName').textContent = `🎬 ${f.name}　(${(f.size/1048576).toFixed(1)} MB)`;
+  $('chip').classList.add('show');
+  $('drop').querySelector('.big').textContent = '✅ 已选择文件，可点「生成」';
+}
+$('chipX').onclick = () => { selectedFile=null; $('chip').classList.remove('show');
+  $('drop').querySelector('.big').textContent='📥 拖拽视频或音频到这里，或点击选择'; };
+
+// ---------- 运行 ----------
+$('run').onclick = run;
+async function run(){
+  const url = $('url').value.trim();
+  if(!selectedFile && !url){ flash('⚠️ 请先选择文件或粘贴网址'); return; }
+  const mock = $('mock').checked;
+  if(!mock && !($('s_api_key').value.trim())){
+    flash('⚠️ 尚未配置 API Key，请点右上角「设置」'); $('modal').classList.add('show'); return;
+  }
+  // UI 状态
+  $('run').disabled = true; $('run').textContent = '⏳ 生成中…';
+  $('progress').classList.add('show'); $('result').classList.remove('show');
+  const plog = $('plog'); plog.innerHTML = '';
+  const qs = new URLSearchParams({
+    url, title: deriveTitle(), subject:$('subject').value.trim(), audience:$('audience').value.trim(),
+    extra:$('extra').value.trim(), model:$('s_model').value.trim()||'qwen3.7-plus',
+    base_url:$('s_base_url').value.trim(), api_key:$('s_api_key').value.trim(),
+    single_file: $('s_single_file').checked?'1':'0', mock: mock?'1':'0',
+  });
+  if(selectedFile) qs.set('name', selectedFile.name);
+
+  try{
+    const resp = await fetch('/api/run?'+qs.toString(), {method:'POST', body: selectedFile || undefined});
+    const reader = resp.body.getReader(); const dec = new TextDecoder(); let buf='';
+    while(true){
+      const {done,value} = await reader.read(); if(done) break;
+      buf += dec.decode(value,{stream:true});
+      let parts = buf.split('\n'); buf = parts.pop();
+      for(const ln of parts) handleLine(ln);
+    }
+    if(buf) handleLine(buf);
+  }catch(e){ appendLog('❌ 网络错误：'+e.message); finishError(); }
+}
+
+function handleLine(ln){
+  if(!ln) return;
+  if(ln.startsWith('F|')){
+    try{ lastResult = JSON.parse(ln.slice(2)); showResult(lastResult); }
+    catch(e){ appendLog('❌ 解析结果失败'); finishError(); }
+    return;
+  }
+  if(ln.startsWith('L|')) appendLog(ln.slice(2));
+  else appendLog(ln);
+}
+function appendLog(t){ const p=$('plog'); const s=document.createElement('div'); s.textContent=t; p.appendChild(s); p.scrollTop=p.scrollHeight; }
+
+function deriveTitle(){
+  if(selectedFile) return selectedFile.name.replace(/\.[^.]+$/,'');
+  try{ const u=new URL($('url').value.trim()); const seg=u.pathname.split('/').filter(Boolean).pop(); return seg||'课程笔记'; }
+  catch(e){ return '课程笔记'; }
+}
+
+function showResult(r){
+  $('run').disabled=false; $('run').textContent='✨ 生成课堂笔记';
+  if(r && r.ok){
+    const b=$('banner'); b.className='banner'; b.innerHTML='🎉 笔记已生成！下方为预览，可跳转回看原片。';
+    const iss=$('issues'); iss.style.display='none';
+    if(r.issues && r.issues.length){ iss.style.display='block';
+      iss.innerHTML='<b>⚠️ 运行提示（请务必查看）：</b>'+r.issues.map(x=>'· '+escapeHtml(x)).join('<br>'); }
+    else if(r.warnings && r.warnings.length){ iss.style.display='block';
+      iss.innerHTML='<b>ℹ️ 提示：</b>'+r.warnings.map(x=>'· '+escapeHtml(x)).join('<br>'); }
+    $('preview').src = r.url;
+    $('result').classList.add('show');
+    $('result').scrollIntoView({behavior:'smooth'});
+  }else{
+    finishError(r && r.issues ? r.issues[0] : '生成失败，请查看上方日志。');
+  }
+}
+function finishError(msg){
+  $('run').disabled=false; $('run').textContent='✨ 生成课堂笔记';
+  const b=$('banner'); b.className='banner err'; b.textContent='❌ '+(msg||'生成失败');
+  $('result').classList.add('show'); $('result').scrollIntoView({behavior:'smooth'});
+}
+function escapeHtml(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+// ---------- 结果操作 ----------
+$('openTab').onclick = () => { if(lastResult&&lastResult.url) window.open(lastResult.url,'_blank'); };
+$('copyPath').onclick = () => {
+  if(lastResult&&lastResult.file){ navigator.clipboard.writeText(lastResult.file).then(()=>flash('📋 已复制：'+lastResult.file),()=>flash('复制失败，路径：'+lastResult.file)); }
+};
+$('regen').onclick = () => { $('result').classList.remove('show'); window.scrollTo({top:0,behavior:'smooth'}); };
+
+// ---------- toast ----------
+let toastTimer;
+function flash(msg){
+  let t=$('toast'); if(!t){ t=document.createElement('div'); t.id='toast';
+    t.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#3B3228;color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;z-index:99;box-shadow:0 8px 20px rgba(0,0,0,.25)';
+    document.body.appendChild(t); }
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.style.opacity='0',2200);
+}
+
+loadSettings();
+</script>
+</body>
+</html>
